@@ -1,0 +1,8 @@
+{
+    "name": "lanke",
+    "version": "0.1.0",
+    "author": "LAN Xingcan",
+    "devDependencies": {
+        "typescript": "^2.4.0"
+    }
+}
