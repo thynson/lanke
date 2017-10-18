@@ -2,14 +2,16 @@
     "compilerOptions" : {
         "module": "commonjs",
         "target": "es5",
-        "outDir": "./built",
-        "declaration": true,
-        "sourceMap": true,
+        "noEmit": true,
+        "declaration": false,
+        "sourceMap": false,
         "lib":["es2015.collection", "es5", "es2015.iterable"],
         "importHelpers": true,
-        "noEmitHelpers": true
+        "noEmitHelpers": true,
+        "types": ["mocha", "chai"],
+        "moduleResolution": "node"
     },
     "include": [
-        "src/*.ts"
+        "*.ts"
     ]
 }

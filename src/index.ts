@@ -170,25 +170,25 @@ namespace Implement {
         protected _hasLiberty(stoneGroup: StoneGroup):boolean {
             let hasLiberty = false;
             stoneGroup.stones.forEach((stone)=> {
-                this._getStatesOfAdjacentLocation(stone.x, stone.y)
+                this._getStatesOfAdjacentLocation(stone.location)
                     .forEach((ps)=> hasLiberty = hasLiberty || (ps.stone == null))
             });
             return hasLiberty;
         }
 
-        protected _getStatesOfAdjacentLocation(x: number, y: number):LocationState[] {
+        protected _getStatesOfAdjacentLocation(location):LocationState[] {
             let result = [];
-            if (x > 0) {
-                result.push(this.getStateOfLocation({x:x - 1, y}));
+            if (location.x > 0) {
+                result.push(this.getStateOfLocation({x: location.x - 1, y: location.y}));
             }
-            if (x < this._width) {
-                result.push(this.getStateOfLocation({x:x + 1, y}));
+            if (location.x < this._width) {
+                result.push(this.getStateOfLocation({x: location.x + 1, y: location.y}));
             }
-            if (y > 0) {
-                result.push(this.getStateOfLocation({x, y:y - 1}));
+            if (location.y > 0) {
+                result.push(this.getStateOfLocation({x: location.x, y: location.y - 1}));
             }
-            if (y < this._height) {
-                result.push(this.getStateOfLocation({x, y:y + 1}));
+            if (location.y < this._height) {
+                result.push(this.getStateOfLocation({x: location.x, y: location.y + 1}));
             }
             return result;
         }
@@ -280,7 +280,7 @@ namespace Implement {
                 let opponentAdjacentGroups: StoneGroup[] = [];
                 let friendAdjacentGroups: StoneGroup[] = [];
 
-                this._getStatesOfAdjacentLocation(stone.x, stone.y)
+                this._getStatesOfAdjacentLocation(stone.location)
                     .map((ps) => ps.stone)
                     .filter((stone) => stone != null)
                     .map((stone) => stone.belongingGroup)
@@ -361,6 +361,6 @@ namespace Implement {
     }
 }
 
-export const ChineseRule = new Implement.ChineseRule();
+export const ChineseRule : GameRule = new Implement.ChineseRule();
 
 
