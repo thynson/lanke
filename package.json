@@ -5,7 +5,9 @@
     "main": "built/index.js",
     "typings": "built/index.d.ts",
     "scripts": {
-        "test": "./node_modules/.bin/mocha -r ts-node/register test/test.ts"
+        "test": "./node_modules/.bin/mocha -r ts-node/register test/test.ts",
+        "prepublish": "tsc",
+        "preversion": "npm test"
     },
     "devDependencies": {
         "@types/chai": "^4.0.4",
