@@ -22,7 +22,7 @@ export class LankeError  {
     }
 
 }
-LankeError.prototype=new Error();
+LankeError.prototype = new Error();
 
 /**
  * Error class indicates that an illegal move was tried
@@ -237,8 +237,8 @@ namespace Implement {
 
         getNextMovePlayer(): Player {
             if ((this.getNextMoveNumber() + this._firstMovePlayer) % 2 == 0)
-                return Player.WHITE;
-            return Player.BLACK;
+                return Player.BLACK;
+            return Player.WHITE;
         }
 
         getStateOfLocation(location: Location): LocationState {

@@ -86,6 +86,30 @@ describe("Game", function() {
                 .applyPresetStone({x: 1, y: 1}, lanke.Player.BLACK)
                 .build();
         }, lanke.SuicideNotAllowedError)
+    });
+
+    it('should returns right next move number', function(){
+        let blackMoveFirstGame = lanke.ChineseRule.prepareGameBoard(2,2).setFirstMovePlayer(lanke.Player.BLACK).build();
+        assert(blackMoveFirstGame.getNextMoveNumber() == 1);
+        blackMoveFirstGame.applyMove({x:0, y: 0});
+        assert(blackMoveFirstGame.getNextMoveNumber() == 2);
+
+        let whiteMoveFirstGame = lanke.ChineseRule.prepareGameBoard(2,2).setFirstMovePlayer(lanke.Player.WHITE).build();
+        assert(whiteMoveFirstGame.getNextMoveNumber() == 1);
+        whiteMoveFirstGame.applyMove({x:0, y: 0});
+        assert(whiteMoveFirstGame.getNextMoveNumber() == 2);
+    });
+
+    it('should returns right next move player', function() {
+        let blackMoveFirstGame = lanke.ChineseRule.prepareGameBoard(2,2).setFirstMovePlayer(lanke.Player.BLACK).build();
+        assert(blackMoveFirstGame.getNextMovePlayer() == lanke.Player.BLACK);
+        blackMoveFirstGame.applyMove({x:0,y:0});
+        assert(blackMoveFirstGame.getNextMovePlayer() == lanke.Player.WHITE);
+        let whiteMoveFirstGame = lanke.ChineseRule.prepareGameBoard(2,2).setFirstMovePlayer(lanke.Player.WHITE).build();
+        assert(whiteMoveFirstGame.getNextMovePlayer() == lanke.Player.WHITE);
+        whiteMoveFirstGame.applyMove({x:0, y:0});
+        assert(whiteMoveFirstGame.getNextMovePlayer() == lanke.Player.BLACK);
+
     })
 
 
