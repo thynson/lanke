@@ -170,8 +170,8 @@ namespace Implement {
         protected capturedStones: Set<Stone> = new Set();
         constructor(readonly width: number,
                     readonly height: number,
-                    readonly _firstMovePlayer: Player,
-                    readonly _presetMoves: Array<{location:Location, player: Player}>,
+                    private readonly _firstMovePlayer: Player,
+                    private readonly _presetMoves: Array<{location:Location, player: Player}>,
                     readonly ruleEngine: RuleEngine) {
             if (width < 2 || height < 2)
                 throw new IllegalBoardSettingError(`width: ${width}, height: ${height}`);
@@ -187,14 +187,14 @@ namespace Implement {
         }
 
 
-        public _updateLocationState(location: Location, stone: Stone | null) {
+        public updateLocationState(location: Location, stone: Stone | null) {
             this.locationPool[location.x * this.width + location.y] = new LocationState(stone);
         }
 
-        public _hasLiberty(stoneGroup: StoneGroup):boolean {
+        public hasLiberty(stoneGroup: StoneGroup):boolean {
             let hasLiberty = false;
             stoneGroup.stones.forEach((stone)=> {
-                this._getStatesOfAdjacentLocation(stone.location)
+                this.getStatesOfAdjacentLocation(stone.location)
                     .forEach((ps)=> hasLiberty = hasLiberty || (ps.stone == null))
             });
             return hasLiberty;
@@ -203,14 +203,14 @@ namespace Implement {
         public captureGroup(stoneGroup: StoneGroup): number {
             stoneGroup.stones.forEach((s) => {
                 this.capturedStones.add(s);
-                this._updateLocationState(
+                this.updateLocationState(
                     s.location,
                     null)
             });
             return stoneGroup.stones.size;
         }
 
-        public _getStatesOfAdjacentLocation(location):LocationState[] {
+        public getStatesOfAdjacentLocation(location):LocationState[] {
             let result :LocationState[] = [];
             if (location.x > 0) {
                 result.push(this.getStateOfLocation({x: location.x - 1, y: location.y}));
@@ -336,7 +336,7 @@ namespace Implement {
                 let opponentAdjacentGroups: StoneGroup[] = [];
                 let friendAdjacentGroups: StoneGroup[] = [];
 
-                gameState._getStatesOfAdjacentLocation(stone.location)
+                gameState.getStatesOfAdjacentLocation(stone.location)
                     .map((ps) => ps.stone)
                     .filter((stone) => stone != null)
                     .map((stone: Stone) => stone.belongingGroup)
@@ -348,10 +348,10 @@ namespace Implement {
                         }
                     });
 
-                gameState._updateLocationState(stone.location, stone);
+                gameState.updateLocationState(stone.location, stone);
                 let stoneCaptured = 0;
                 opponentAdjacentGroups
-                    .filter((group) => !gameState._hasLiberty(group))
+                    .filter((group) => !gameState.hasLiberty(group))
                     .forEach((group) => {
                         stoneCaptured += gameState.captureGroup(group);
                     });
@@ -359,13 +359,13 @@ namespace Implement {
                     .forEach((group) => {
 
                         group.stones.forEach((s) => {
-                            gameState._updateLocationState(
+                            gameState.updateLocationState(
                                 s.location,
                                 s.transferToAnotherGroup(stone.belongingGroup))
                         })
                     });
 
-                if (!stoneCaptured && !gameState._hasLiberty(stone.belongingGroup)) {
+                if (!stoneCaptured && !gameState.hasLiberty(stone.belongingGroup)) {
                     throw new SuicideNotAllowedError(stone.moveNumber,
                         stone.player, stone.location, friendAdjacentGroups);
                 }
