@@ -6,6 +6,8 @@
     "typings": "built/index.d.ts",
     "scripts": {
         "test": "./node_modules/.bin/mocha -r ts-node/register test/test.ts",
+        "test:coverage": "nyc -e .ts -i ts-node/register mocha test/test.ts",
+        "coveralls": "nyc report --reporter=text-lcov | coveralls",
         "prepublish": "tsc",
         "preversion": "npm test"
     },
@@ -13,6 +15,7 @@
         "@types/chai": "^4.0.4",
         "@types/mocha": "^2.2.43",
         "chai": "^4.1.2",
+        "coveralls": "^3.0.0",
         "mocha": "^4.0.1",
         "ts-node": "^3.3.0",
         "tslib": "^1.8.0",
