@@ -30,11 +30,8 @@ LankeError.prototype = new Error();
 export class IllegalMoveError extends LankeError {
     constructor(readonly moveNumber: number,
                 readonly player: Player,
-                readonly location?: Location) {
+                readonly location: Location | null) {
         super();
-        // Error.apply(this);
-
-
     }
 }
 
@@ -95,7 +92,7 @@ export interface Location {
 
 export interface LocationState {
     /* Whether a location was occupied by a stone */
-    readonly stone?: Stone
+    readonly stone: Stone | null
 }
 
 // GameRule
@@ -125,7 +122,7 @@ export interface GameEngine {
      *                   if no value was passed, assuming pass
      * @returns {GameEngine}
      */
-    applyMove(location?: Location): GameEngine
+    applyMove(location: Location|null): GameEngine
     getNextMoveNumber(): number;
     getNextMovePlayer(): Player
 }
@@ -160,7 +157,7 @@ namespace Implement {
         }
     }
 
-    export class LocationState {
+    export class LocationState implements LocationState {
         constructor(readonly stone: Stone | null) {}
     }
 
@@ -186,7 +183,7 @@ namespace Implement {
                 }
             }
 
-            _presetMoves.forEach((p)=>this.placePresetStone(new Stone(p.location, 0, p.player)));
+            _presetMoves.forEach((p)=>this.placePresetStone(p.player, p.location));
         }
 
 
@@ -214,7 +211,7 @@ namespace Implement {
         }
 
         public _getStatesOfAdjacentLocation(location):LocationState[] {
-            let result = [];
+            let result :LocationState[] = [];
             if (location.x > 0) {
                 result.push(this.getStateOfLocation({x: location.x - 1, y: location.y}));
             }
@@ -245,31 +242,38 @@ namespace Implement {
             return this.locationPool[location.x * this.width + location.y];
         }
 
-        applyMove(location?: Location): GameEngine {
-            this.placeStone(location == null
-                ? null
-                : new Stone(location, this.getNextMoveNumber(), this.getNextMovePlayer()));
+        applyMove(location: Location|null): GameEngine {
+            if (location != null) {
+                if (location.x < 0
+                    || location.x >= this.width
+                    || location.y < 0
+                    || location.y >= this.width)
+                    throw new IllegalLocationError();
+            }
+            this.placeStone(location);
             return this;
         }
 
-        placeStone(stone?: Stone) {
-            if (stone) {
-                let locationState = this.getStateOfLocation(stone.location);
+        placeStone(location: Location | null) {
+            let moveNumber = this.getNextMoveNumber();
+            let movePlayer = this.getNextMovePlayer();
+            if (location) {
+                let locationState = this.getStateOfLocation(location);
 
                 if (locationState.stone !== null)
-                    throw new LocationOccupiedError(stone.moveNumber, stone.player, locationState.stone);
+                    throw new LocationOccupiedError(moveNumber, movePlayer, locationState.stone);
 
             }
             let originLocationStatePool = this.locationPool.slice();
             let originMoves = this.moves.slice();
             let originCapturedStones: Set<Stone> = new Set(this.capturedStones);
-            if (stone) {
-                this.moves.push(stone.location);
+            if (location) {
+                this.moves.push(location);
             } else {
                 this.moves.push(null);
             }
             try {
-                this.ruleEngine.tryPlaceStone(this,stone);
+                this.ruleEngine.tryPlaceStone(this, movePlayer, moveNumber, location);
             } catch(e) {
                 this.moves = originMoves;
                 this.locationPool = originLocationStatePool;
@@ -278,17 +282,17 @@ namespace Implement {
             }
         }
 
-        placePresetStone(stone: Stone) {
-            let locationState = this.getStateOfLocation(stone.location);
+        placePresetStone(player: Player, location: Location) {
+            let locationState = this.getStateOfLocation(location);
 
             if (locationState.stone !== null)
-                throw new LocationOccupiedError(stone.moveNumber, stone.player, locationState.stone);
+                throw new LocationOccupiedError(0, player, locationState.stone);
 
             let originLocationStatePool = this.locationPool.slice();
             let originMoves = this.moves.slice();
             let originCapturedStones: Set<Stone> = new Set(this.capturedStones);
             try {
-                this.ruleEngine.tryPlaceStone(this,stone);
+                this.ruleEngine.tryPlaceStone(this, player, 0, location);
             } catch(e) {
                 // Recover state
                 this.moves = originMoves;
@@ -303,7 +307,7 @@ namespace Implement {
     }
 
     interface RuleEngine {
-        tryPlaceStone(gameState: GameEngine, stone?: Stone);
+        tryPlaceStone(gameState: GameEngine, player: Player, moveNumber: number, location: Location | null);
     }
 
     class ChineseRuleEngine implements RuleEngine {
@@ -313,7 +317,7 @@ namespace Implement {
         }
         private static _encodeState(gameState: GameEngine) {
             let turn = gameState.getNextMovePlayer();
-            let encoded = [];
+            let encoded: String[] = [];
             encoded.push(turn.toString());
             encoded.push(':');
             for (let x = 0; x < gameState.width; x++)
@@ -325,17 +329,19 @@ namespace Implement {
 
             return encoded.join('');
         }
-        tryPlaceStone(gameState: GameEngine, stone?: Stone) {
-            if (stone) {
+        tryPlaceStone(gameState: GameEngine, player: Player, moveNumber: number, location: Location | null) {
+            if (location != null) {
+                let stone = new Stone(location, moveNumber, player);
+
                 let opponentAdjacentGroups: StoneGroup[] = [];
                 let friendAdjacentGroups: StoneGroup[] = [];
 
                 gameState._getStatesOfAdjacentLocation(stone.location)
                     .map((ps) => ps.stone)
                     .filter((stone) => stone != null)
-                    .map((stone) => stone.belongingGroup)
+                    .map((stone: Stone) => stone.belongingGroup)
                     .forEach((group) => {
-                        if (group.player === stone.player) {
+                        if (group.player === player) {
                             friendAdjacentGroups.push(group);
                         } else {
                             opponentAdjacentGroups.push(group);
@@ -360,18 +366,18 @@ namespace Implement {
                     });
 
                 if (!stoneCaptured && !gameState._hasLiberty(stone.belongingGroup)) {
-                    throw new SuicideNotAllowedError(gameState.getNextMoveNumber(),
+                    throw new SuicideNotAllowedError(stone.moveNumber,
                         stone.player, stone.location, friendAdjacentGroups);
                 }
             }
 
             let situation = ChineseRuleEngine._encodeState(gameState);
+            let repeatedMoveNumber = this._situationMap.get(situation);
+            if (repeatedMoveNumber)
+                throw new PositionRecreatedError(moveNumber,
+                    player, location, repeatedMoveNumber);
 
-            if (this._situationMap.has(situation))
-                throw new PositionRecreatedError(stone.moveNumber,
-                    stone.player, stone.location, this._situationMap.get(situation));
-
-            this._situationMap.set(situation, stone.moveNumber);
+            this._situationMap.set(situation, moveNumber);
         }
     }
 

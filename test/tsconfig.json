@@ -5,6 +5,7 @@
         "noEmit": true,
         "declaration": false,
         "sourceMap": false,
+        "strictNullChecks": true,
         "lib":["es2015.collection", "es5", "es2015.iterable"],
         "importHelpers": true,
         "noEmitHelpers": true,

@@ -14,6 +14,30 @@ describe("Game", function() {
 
     });
 
+    it('should validate location', function() {
+        assert.throw(()=> {
+            lanke.ChineseRule.prepareGameBoard(2,2)
+                .applyPresetStone({x:-1, y: 1}, lanke.Player.WHITE);
+        });
+        assert.throw(()=> {
+            lanke.ChineseRule.prepareGameBoard(2,2)
+                .applyPresetStone({x:3, y: 1}, lanke.Player.WHITE);
+        });
+
+        assert.throw(()=> {
+            lanke.ChineseRule
+                .prepareGameBoard(19,19)
+                .build()
+                .applyMove({x:20, y: 20});
+        });
+        assert.throw(()=> {
+            lanke.ChineseRule
+                .prepareGameBoard(19,19)
+                .build()
+                .applyMove({x:-1, y: 20});
+        });
+    });
+
 
     it('should returns right next move number', function(){
         let blackMoveFirstGame = lanke.ChineseRule.prepareGameBoard(2,2).setFirstMovePlayer(lanke.Player.BLACK).build();
@@ -39,7 +63,7 @@ describe("Game", function() {
 
     });
 
-    it('should be should be illegal to setup board with preset stone in same location', function() {
+    it('should be should be illegal to place stone on occupied location', function() {
         assert.throw(()=> {
             lanke.ChineseRule.prepareGameBoard(2,2)
                 .applyPresetStone({x: 0, y: 0}, lanke.Player.BLACK)
@@ -67,6 +91,36 @@ describe("Game", function() {
                 .applyPresetStone({x: 0, y: 0}, lanke.Player.WHITE)
                 .applyPresetStone({x: 0, y: 0}, lanke.Player.BLACK)
                 .build();
+        });
+
+        assert.throw(()=> {
+            lanke.ChineseRule.prepareGameBoard(2,2)
+                .applyPresetStone({x: 0, y: 0}, lanke.Player.BLACK)
+                .applyPresetStone({x: 0, y: 0}, lanke.Player.BLACK)
+                .build();
+
+
+        });
+        assert.throw(()=> {
+            lanke.ChineseRule.prepareGameBoard(2,2)
+                .build()
+                .applyMove({x: 0, y: 0})
+                .applyMove({x: 0, y: 0})
+        });
+
+        assert.throw(()=> {
+            lanke.ChineseRule.prepareGameBoard(2,2)
+                .applyPresetStone({x: 0, y: 0}, lanke.Player.BLACK)
+                .build()
+                .applyMove({x: 0, y: 0})
+        });
+
+        assert.throw(()=> {
+            lanke.ChineseRule.prepareGameBoard(2,2)
+                .build()
+                .applyMove({x: 0, y: 0})
+                .applyMove({x: 1, y: 1})
+                .applyMove({x: 0, y: 0})
         });
 
     });
@@ -131,11 +185,30 @@ describe("Game", function() {
         game.applyMove({x:0, y: 1});
         assert(game.getStateOfLocation({x: 0, y: 0}).stone == null);
         assert(game.getStateOfLocation({x: 1, y: 0}).stone == null);
+        let locationState;
+        locationState = game.getStateOfLocation({x: 1, y: 1});
+        assert(locationState.stone != null && locationState.stone.player == lanke.Player.WHITE);
+        locationState = game.getStateOfLocation({x: 0, y: 1});
 
-        assert(game.getStateOfLocation({x: 1, y: 1}).stone.player == lanke.Player.WHITE);
-        assert(game.getStateOfLocation({x: 0, y: 1}).stone.player == lanke.Player.WHITE);
+        assert(locationState.stone != null && locationState.stone.player == lanke.Player.WHITE);
 
-    })
+    });
+
+    it('should not be able to check repeating of game position correctly', function() {
+        let game = lanke.ChineseRule.prepareGameBoard(4, 4)
+            .applyPresetStone({x: 0, y: 0}, lanke.Player.WHITE)
+            .applyPresetStone({x: 1, y: 1}, lanke.Player.WHITE)
+            .applyPresetStone({x: 1, y: 2}, lanke.Player.BLACK)
+            .applyPresetStone({x: 0, y: 3}, lanke.Player.BLACK)
+            .build();
+
+        game.applyMove({x: 0, y: 1});
+        game.applyMove({x: 0, y: 2});
+        assert .throw(()=> game.applyMove({x: 0, y: 1}), lanke.PositionRecreatedError);
+        game.applyMove(null);
+        assert.throw(()=> game.applyMove(null), lanke.PositionRecreatedError);
+    });
+
 
 
 });
