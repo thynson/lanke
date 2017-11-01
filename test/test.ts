@@ -63,7 +63,7 @@ describe("Game", function() {
 
     });
 
-    it('should be should be illegal to place stone on occupied location', function() {
+    it('should be illegal to place stone on occupied location', function() {
         assert.throw(()=> {
             lanke.ChineseRule.prepareGameBoard(2,2)
                 .applyPresetStone({x: 0, y: 0}, lanke.Player.BLACK)
